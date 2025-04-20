@@ -1,0 +1,141 @@
+@startuml CatchUp Class Diagram
+class AppComponent <<Component>> {
+    +constructor(translate): void
+  }
+package "Public Bounded Context" {
+  class SideNavigationBarComponent <<Component>> {
+    -newsApi: NewsApiService
+    -logoApi: LogoApiService
+    +sources: Array<Source>
+    +articles: Array<Article>
+    +ngOnInit(): void
+    +searchArticlesForSource(source: Source)
+    +onSourceSelected(source: Source)
+  }
+
+  class FooterContentComponent <<Component>> {
+
+  }
+  class LanguageSwitcherComponent <<Component>> {
+    +currentLang: string
+    +languages: string[]
+    +constructor(translate: TranslateService)
+    +useLanguage(language: string): void
+  }
+}
+
+package "Shared Bounded Context" {
+class LogoApiService <<Service>> {
+    +getUrlToLogo(source: Source): string
+  }
+}
+
+package "News Bounded Context" {
+
+  class ArticleItemComponent <<Component>> {
+    +article: Article {{ property }}
+    +constructor(snackBar: MatSnackBar): void
+    +shareArticle(): void
+  }
+  class ArticleListComponent <<Component>> {
+    +articles: Array<Article> {{ property }}
+  }
+  class SourceListComponent <<Component>> {
+    +sources: Array<Source> {{ property }}
+    +sourceSelected: EventEmitter<Source> {{ Event }}
+    +onSourceSelected(source: Source): void
+  }
+  class SourceItemComponent <<Component>> {
+    +source: Source {{ property }}
+    +sourceSelected: EventEmitter<Source> {{ Event }}
+    +onClick(): void
+  }
+  class NewsApiService <<Service>> {
+    - baseUrl: string
+    - newsEndpoint: string
+    - sourcesEndpoint: string
+    - apiKey: string
+    +constructor(http: HttpClient, logoApiService: LogoApiService)
+    +getSources(): Observable<Source[]>
+    +getArticlesBySourceId(sourceId: string): Observable<Article[]>
+  }
+
+  class ArticleAssembler <<Assembler>> {
+    {static} logoApiService: LogoApiService
+    {static} withLogiApiService(logoApiService: LogoApiService): ArticleAssembler
+    {static} toEntityFromResource(resource: ArticleResource): Article
+    {static} toEntitiesFromResponse(response: TopHeadlinesResponse): Article[]
+  }
+  class SourceAssembler <<Assembler>> {
+    {static} logoApiService: LogoApiService
+    {static} withLogiApiService(logoApiService: LogoApiService): SourceAssembler
+    {static} toEntityFromResource(resource: SourceResource): Source
+    {static} toEntitiesFromResponse(response: SourcesResponse): Source[]
+  }
+  interface SourcesResponse {
+    +status: string
+    +sources: SourceResource[]
+  }
+  interface SourceResource {
+    +id: string
+    +name: string
+    +url: string
+    +urlToLogo: string
+  }
+  interface TopHeadlinesResponse {
+    +status: string
+    +totalResults: number
+    +articles: ArticleResource[]
+  }
+  interface ArticleResource {
+    +source: { id: string | null, name: string }
+    +title: string
+    +description: string | null
+    +url: string
+    +urlToImage: string | null
+    +publishedAt: string
+  }
+  class Article {
+      +source: Source
+      +title: string
+      +description: string
+      +url: string
+      +urlToImage: string
+      +publishedAt: string
+    }
+    class Source {
+      +id: string
+      +name: string
+      +urlToLogo: string
+    }
+}
+
+' Relationships
+AppComponent --> SideNavigationBarComponent : renders
+SideNavigationBarComponent --> SourceListComponent : renders
+SideNavigationBarComponent --> ArticleListComponent: renders
+SideNavigationBarComponent --> LanguageSwitcherComponent : renders
+SideNavigationBarComponent --> FooterContentComponent : displays attributions
+ArticleListComponent --> ArticleItemComponent : renders articles
+SourceListComponent --> SourceItemComponent : renders sources
+SideNavigationBarComponent --> NewsApiService : requests sources and articles
+NewsApiService --> ArticleAssembler : converts articles
+NewsApiService --> SourceAssembler : converts sources
+ArticleAssembler --> LogoApiService : gets logo URLs
+SourceAssembler --> LogoApiService : gets logo URLs
+ArticleAssembler --> TopHeadlinesResponse : converts to ArticleResource
+ArticleAssembler --> ArticleResource : converts to Article
+SourceAssembler --> SourceResource : converts to Source
+ArticleAssembler --> Article : produces
+SourceAssembler --> Source : produces
+NewsApiService --> Article : uses
+NewsApiService --> Source : uses
+ArticleListComponent --> Article : displays
+SourceListComponent --> Source : displays
+ArticleItemComponent --> Article : displays
+SourceItemComponent --> Source : displays
+Article o--> "1" Source : contains
+SourcesResponse o--> "*" SourceResource : contains
+TopHeadlinesResponse o--> "*" ArticleResource : contains
+
+@enduml
