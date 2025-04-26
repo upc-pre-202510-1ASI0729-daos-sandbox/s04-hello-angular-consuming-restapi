@@ -23,7 +23,7 @@ The CatchUp project is a news aggregation application that allows users to brows
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/upc-pre-202510-1ASI0729-daos-sandbox/s04-hello-angular-consuming-restapi.git
-   cd catchup
+   cd s04-hello-angular-consuming-restapi.git
    ```
 
 2. **Install Dependencies**:
